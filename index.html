@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulse Feed Replica</title>
+    <style>
+        :root {
+            --pega-blue: #004b87;
+            --pega-bg: #f3f5f8;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --border-color: #dddddd;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--pega-bg);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .pulse-container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .pulse-header {
+            background-color: var(--pega-blue);
+            color: white;
+            padding: 15px 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .pulse-input-area {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: #fafafa;
+        }
+
+        .pulse-input-area textarea {
+            width: 100%;
+            height: 80px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            resize: none;
+            font-family: inherit;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        .pulse-input-area textarea:focus {
+            outline: none;
+            border-color: var(--pega-blue);
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .post-btn {
+            background-color: var(--pega-blue);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .post-btn:hover {
+            background-color: #003666;
+        }
+
+        .feed-area {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+
+        .post-item {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 15px;
+        }
+
+        .post-item:last-child {
+            border-bottom: none;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background-color: var(--pega-blue);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .post-content {
+            flex-grow: 1;
+        }
+
+        .post-header-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .post-author {
+            font-weight: bold;
+            color: var(--text-main);
+        }
+
+        .post-time {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .post-text {
+            color: var(--text-main);
+            line-height: 1.4;
+            white-space: pre-wrap; /* Keeps line breaks */
+        }
+
+        .no-posts {
+            padding: 30px;
+            text-align: center;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="pulse-container">
+        <div class="pulse-header">
+            Pulse
+        </div>
+        
+        <div class="pulse-input-area">
+            <textarea id="messageInput" placeholder="Start a conversation..."></textarea>
+            <div class="button-container">
+                <button class="post-btn" onclick="addPost()">Post</button>
+            </div>
+        </div>
+
+        <div id="feedArea" class="feed-area">
+            </div>
+    </div>
+
+    <script>
+        // Array to hold our posts
+        let posts = [];
+
+        // Load posts from Local Storage when the page opens
+        window.onload = function() {
+            const savedPosts = localStorage.getItem('pulsePosts');
+            if (savedPosts) {
+                posts = JSON.parse(savedPosts);
+                renderPosts();
+            } else {
+                renderEmptyState();
+            }
+        };
+
+        // Function to handle adding a new post
+        function addPost() {
+            const inputElement = document.getElementById('messageInput');
+            const messageText = inputElement.value.trim();
+
+            if (messageText === '') return; // Don't post empty messages
+
+            // Create a new post object
+            const newPost = {
+                id: Date.now(),
+                text: messageText,
+                author: 'Current User', // Hardcoded for this static demo
+                initials: 'CU',
+                timestamp: new Date().toLocaleString()
+            };
+
+            // Add to the beginning of the array so newest is at the top
+            posts.unshift(newPost);
+
+            // Save to local storage
+            localStorage.setItem('pulsePosts', JSON.stringify(posts));
+
+            // Clear the input and re-render
+            inputElement.value = '';
+            renderPosts();
+        }
+
+        // Function to display the posts on the screen
+        function renderPosts() {
+            const feedArea = document.getElementById('feedArea');
+            feedArea.innerHTML = ''; // Clear current feed
+
+            if (posts.length === 0) {
+                renderEmptyState();
+                return;
+            }
+
+            posts.forEach(post => {
+                const postHTML = `
+                    <div class="post-item">
+                        <div class="avatar">${post.initials}</div>
+                        <div class="post-content">
+                            <div class="post-header-info">
+                                <span class="post-author">${post.author}</span>
+                                <span class="post-time">${post.timestamp}</span>
+                            </div>
+                            <div class="post-text">${post.text}</div>
+                        </div>
+                    </div>
+                `;
+                feedArea.innerHTML += postHTML;
+            });
+        }
+
+        function renderEmptyState() {
+            document.getElementById('feedArea').innerHTML = `
+                <div class="no-posts">No messages yet. Be the first to post!</div>
+            `;
+        }
+    </script>
+</body>
+</html>
